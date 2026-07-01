@@ -5,6 +5,7 @@ import 'package:device_preview/device_preview.dart';
 
 import 'package:restaurant/providers/cart_provider.dart';
 import 'package:restaurant/screens/menu_screen.dart';
+import 'package:restaurant/screens/scan_screen.dart';
 import 'package:restaurant/theme/app_theme.dart';
 
 void main() {
@@ -33,7 +34,7 @@ class LartCulinaireApp extends StatelessWidget {
         title: "L'Art Culinaire",
         debugShowCheckedModeBanner: false,
         theme: AppTheme.theme,
-        home: const MenuScreen(),
+        home: const ScanScreen(),
       ),
     );
   }
