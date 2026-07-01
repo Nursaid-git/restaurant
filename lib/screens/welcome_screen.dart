@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:restaurant/main.dart';
+import 'package:restaurant/screens/menu_screen.dart';
 
 class WelcomeScreen extends StatelessWidget {
   const WelcomeScreen({super.key});
@@ -95,7 +96,7 @@ class WelcomeScreen extends StatelessWidget {
                         ),
                       ),
                       onPressed: () {
-                       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => RootScreen()));
+                       Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => MenuScreen()));
                       },
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,

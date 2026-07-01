@@ -38,12 +38,6 @@ class ScanScreen extends StatelessWidget {
                     color: Colors.white.withOpacity(0.2),
                     shape: BoxShape.circle,
                   ),
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.white),
-                    onPressed: () {
-                      // Логика возврата назад (пока мы на первом экране, она просто для визуала)
-                    },
-                  ),
                 ),
                 const SizedBox(width: 16),
                 const Text(
