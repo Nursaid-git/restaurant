@@ -17,7 +17,22 @@ class MenuScreen extends StatefulWidget {
 class _MenuScreenState extends State<MenuScreen> {
   String _selectedCategory = 'Все';
 
+  bool _isSearching = false;
+  String _searchQuery = '';
+  final _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   List<Dish> get _filteredDishes {
+    if (_isSearching && _searchQuery.trim().isNotEmpty) {
+      final query = _searchQuery.trim().toLowerCase();
+      return kDishes.where((d) => d.name.toLowerCase().contains(query)).toList();
+    }
+
     if (_selectedCategory == 'Все') return kDishes;
 
     final matching = kDishes.where((d) => d.category == _selectedCategory).toList();
@@ -29,6 +44,16 @@ class _MenuScreenState extends State<MenuScreen> {
   int _currentIndex = 0;
 
   void _goToTab(int index) => setState(() => _currentIndex = index);
+
+  void _toggleSearch() {
+    setState(() {
+      _isSearching = !_isSearching;
+      if (!_isSearching) {
+        _searchQuery = '';
+        _searchController.clear();
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -50,21 +75,43 @@ class _MenuScreenState extends State<MenuScreen> {
         ),
       ),
       appBar: AppBar(
-        title: Align(
+        title: _isSearching
+            ? TextField(
+          controller: _searchController,
+          autofocus: true,
+          onChanged: (value) => setState(() => _searchQuery = value),
+          style: const TextStyle(color: AppColors.textPrimary, fontSize: 16),
+          decoration: const InputDecoration(
+            hintText: 'Поиск блюда...',
+            hintStyle: TextStyle(color: AppColors.textSecondary),
+            border: InputBorder.none,
+          ),
+        )
+            : Align(
             alignment: Alignment.topLeft,
             child: const Text("L'Art Culinaire", style: TextStyle(color: AppColors.accent))),
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 16),
-            child: Icon(Icons.search),
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: _toggleSearch,
+              child: Icon(_isSearching ? Icons.close : Icons.search),
+            ),
           ),
         ],
       ),
       body: Column(
         children: [
-          _buildCategoryChips(),
+          if (!_isSearching) _buildCategoryChips(),
           Expanded(
-            child: GridView.builder(
+            child: _filteredDishes.isEmpty
+                ? const Center(
+              child: Text(
+                'Ничего не найдено',
+                style: TextStyle(color: AppColors.textSecondary),
+              ),
+            )
+                : GridView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               itemCount: _filteredDishes.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
