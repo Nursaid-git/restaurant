@@ -66,7 +66,7 @@ class WelcomeScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Text(
-                    'Добро пожаловать за стол №12',
+                    'Добро пожаловать',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 20,
