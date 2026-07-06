@@ -173,7 +173,7 @@ alter table public.profiles disable row level security;
 alter table public.orders disable row level security;
 alter table public.order_items disable row level security;
 alter table public.order_item_options disable row level security;
-
+git
 -- =====================================================================
 -- SEED DATA (перенос mock_data.dart в БД, для теста)
 -- =====================================================================
