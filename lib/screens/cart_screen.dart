@@ -27,6 +27,7 @@ class _CartScreenState extends State<CartScreen> {
   void _showOrderPlacedDialog(BuildContext context) {
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (_) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: const Row(
@@ -42,7 +43,10 @@ class _CartScreenState extends State<CartScreen> {
         ),
         actions: [
           TextButton(
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () {
+              Navigator.of(context).pop(); // Закрыть диалог
+              Navigator.of(context).pop(); // Вернуться в меню
+            },
             child: const Text('Ок'),
           ),
         ],
@@ -145,10 +149,12 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context) => const MenuScreen()));},
+            onPressed: () {
+              Navigator.push(context, MaterialPageRoute(builder: (context) => const MenuScreen()));
+            },
             child: const Padding(
               padding: EdgeInsets.all(3),
-              child: Text('Перейти в меню',style: TextStyle(fontSize: 14),),
+              child: Text('Перейти в меню', style: TextStyle(fontSize: 14),),
             ),
           ),
         ],
@@ -157,6 +163,8 @@ class _CartScreenState extends State<CartScreen> {
   }
 
   Widget _buildCartContent(BuildContext context, CartProvider cart) {
+    final resProvider = context.read<RestaurantProvider>();
+
     return Column(
       children: [
         Expanded(
@@ -166,7 +174,7 @@ class _CartScreenState extends State<CartScreen> {
               ...cart.items.map((item) => _CartItemTile(item: item)),
               const SizedBox(height: 8),
               OutlinedButton.icon(
-                onPressed: (){
+                onPressed: () {
                   Navigator.push(context, MaterialPageRoute(builder: (context) => const MenuScreen()));
                 },
                 icon: const Icon(Icons.add, color: AppColors.accent),
@@ -225,12 +233,34 @@ class _CartScreenState extends State<CartScreen> {
           child: Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 14),
             child: ElevatedButton.icon(
-              onPressed: () {
-                cart.placeOrder();
-                _showOrderPlacedDialog(context);
-              },
-              label: const Text('Оформить заказ'),
-              icon: const Icon(Icons.arrow_forward, size: 18),
+              onPressed: cart.isSending
+                  ? null
+                  : () async {
+                      final restaurantId = resProvider.selectedRestaurant?.id;
+                      final tableName = resProvider.selectedTable;
+
+                      if (restaurantId != null && tableName != null) {
+                        final success = await cart.sendOrderToSupabase(restaurantId, tableName);
+                        if (success) {
+                          _showOrderPlacedDialog(context);
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Ошибка при оформлении заказа. Попробуйте снова.'),
+                              backgroundColor: Colors.redAccent,
+                            ),
+                          );
+                        }
+                      }
+                    },
+              label: cart.isSending
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                    )
+                  : const Text('Оформить заказ'),
+              icon: cart.isSending ? null : const Icon(Icons.arrow_forward, size: 18),
               style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(52)),
             ),
           ),

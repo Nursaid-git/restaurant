@@ -57,8 +57,22 @@ class _MenuScreenState extends State<MenuScreen> {
     final allDishes = resProvider.dishes;
     final filteredDishes = _getFilteredDishes(allDishes);
 
-    // Получаем уникальные категории из загруженных блюд
     final categories = ['Все', ...allDishes.map((d) => d.category).toSet().toList()];
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    int crossAxisCount = 2;
+    double childAspectRatio = 0.64; 
+
+    if (screenWidth > 900) {
+      crossAxisCount = 4;
+      childAspectRatio = 0.75;
+    } else if (screenWidth > 600) {
+      crossAxisCount = 3;
+      childAspectRatio = 0.70;
+    } else if (screenWidth < 380) {
+      // Еще выше для самых узких экранов
+      childAspectRatio = 0.54; 
+    }
 
     return Scaffold(
       floatingActionButton: FloatingActionButton(
@@ -149,11 +163,11 @@ class _MenuScreenState extends State<MenuScreen> {
                 : GridView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
               itemCount: filteredDishes.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: crossAxisCount,
                 mainAxisSpacing: 14,
                 crossAxisSpacing: 14,
-                childAspectRatio: 0.69,
+                childAspectRatio: childAspectRatio,
               ),
               itemBuilder: (context, index) {
                 final dish = filteredDishes[index];
@@ -239,7 +253,8 @@ class _DishCard extends StatelessWidget {
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => Container(
                         color: AppColors.chipBg,
-                        child: const Icon(Icons.restaurant, color: AppColors.textSecondary),
+                        alignment: Alignment.center,
+                        child: const Icon(Icons.broken_image_outlined, color: AppColors.textSecondary, size: 30),
                       ),
                     ),
                   ),
@@ -272,9 +287,9 @@ class _DishCard extends StatelessWidget {
               padding: const EdgeInsets.fromLTRB(10, 8, 10, 0),
               child: Text(
                 dish.name,
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
               ),
             ),
             Padding(
@@ -283,7 +298,7 @@ class _DishCard extends StatelessWidget {
                 dish.description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: AppColors.textSecondary, fontSize: 11.5),
+                style: const TextStyle(color: AppColors.textSecondary, fontSize: 11),
               ),
             ),
             const Spacer(),
@@ -292,10 +307,16 @@ class _DishCard extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    '\$${dish.price.toStringAsFixed(2)}',
-                    style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        '\$${dish.price.toStringAsFixed(2)}',
+                        style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 13.5),
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: 4),
                   _QuantityControl(dish: dish),
                 ],
               ),

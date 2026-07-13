@@ -48,6 +48,10 @@ class _RestaurantSelectionScreenState extends State<RestaurantSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // На маленьких экранах делаем 4 колонки, на больших - 5 или 6
+    int tableColumns = screenWidth < 360 ? 4 : 5;
+
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
@@ -82,8 +86,8 @@ class _RestaurantSelectionScreenState extends State<RestaurantSelectionScreen> {
             GridView.builder(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: tableColumns,
                 crossAxisSpacing: 8,
                 mainAxisSpacing: 8,
                 childAspectRatio: 1,
@@ -190,25 +194,26 @@ class _RestaurantSelectionScreenState extends State<RestaurantSelectionScreen> {
                 ),
                 child: Icon(icon, color: isSelected ? AppColors.accent : AppColors.textSecondary),
               ),
-              const SizedBox(width: 16),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    res.name,
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? AppColors.accent : AppColors.textPrimary,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      res.name,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: isSelected ? AppColors.accent : AppColors.textPrimary,
+                      ),
                     ),
-                  ),
-                  Text(
-                    typeText,
-                    style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
-                  ),
-                ],
+                    Text(
+                      typeText,
+                      style: const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                  ],
+                ),
               ),
-              const Spacer(),
               if (isSelected)
                 const Icon(Icons.check_circle, color: AppColors.accent),
             ],

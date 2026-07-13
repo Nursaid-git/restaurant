@@ -7,30 +7,30 @@ class ScanScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    // Рамка сканера будет занимать 70% ширины экрана, но не более 300px
+    final scannerSize = (screenWidth * 0.7).clamp(200.0, 300.0);
+
     return Scaffold(
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Фоновая картинка
           Image.network(
             'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey.shade900),
           ),
-          // Эффект размытия
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
             child: Container(
               color: Colors.black.withOpacity(0.6),
             ),
           ),
-
-          // Заголовок
-          const Positioned(
-            top: 60,
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 20,
             left: 20,
             right: 20,
-            child: Center(
+            child: const Center(
               child: Text(
                 'Сканировать QR-код',
                 style: TextStyle(
@@ -41,12 +41,10 @@ class ScanScreen extends StatelessWidget {
               ),
             ),
           ),
-
-          // Рамка сканера
           Center(
             child: Container(
-              width: 260,
-              height: 260,
+              width: scannerSize,
+              height: scannerSize,
               decoration: BoxDecoration(
                 border: Border.all(
                   color: const Color(0xFFB95C1D),
@@ -54,17 +52,10 @@ class ScanScreen extends StatelessWidget {
                 ),
                 borderRadius: BorderRadius.circular(32),
               ),
-              child: Stack(
-                children: [
-                   // Можно добавить анимацию линии сканирования позже
-                ],
-              ),
             ),
           ),
-
-          // Кнопка внизу экрана для перехода
           Positioned(
-            bottom: 50,
+            bottom: MediaQuery.of(context).padding.bottom + 40,
             left: 20,
             right: 20,
             child: ElevatedButton(
@@ -76,7 +67,6 @@ class ScanScreen extends StatelessWidget {
                 ),
               ),
               onPressed: () {
-                // После "сканирования" переходим к выбору ресторана
                 Navigator.push(
                   context, 
                   MaterialPageRoute(builder: (context) => const RestaurantSelectionScreen())
