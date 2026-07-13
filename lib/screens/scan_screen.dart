@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:restaurant/screens/welcome_screen.dart';
+import 'package:restaurant/screens/restaurant_selection_screen.dart';
 
 class ScanScreen extends StatelessWidget {
   const ScanScreen({super.key});
@@ -15,54 +15,49 @@ class ScanScreen extends StatelessWidget {
           Image.network(
             'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
             fit: BoxFit.cover,
-            // Если картинка не загрузится, покажем серый фон
             errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey.shade900),
           ),
           // Эффект размытия
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
             child: Container(
-              color: Colors.black.withOpacity(0.6), // Легкое затемнение
+              color: Colors.black.withOpacity(0.6),
             ),
           ),
 
-          // Верхняя панель (Кнопка назад и Заголовок)
-          Positioned(
+          // Заголовок
+          const Positioned(
             top: 60,
             left: 20,
             right: 20,
-            child: Row(
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
+            child: Center(
+              child: Text(
+                'Сканировать QR-код',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
                 ),
-                const SizedBox(width: 16),
-                const Text(
-                  'Сканировать QR-код',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
 
-          // Рамка сканера по центру (упрощенный вариант рамки)
+          // Рамка сканера
           Center(
             child: Container(
-              width: 250,
-              height: 250,
+              width: 260,
+              height: 260,
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: const Color(0xFFB95C1D), // Оранжевый цвет из ТЗ
-                  width: 2,
+                  color: const Color(0xFFB95C1D),
+                  width: 3,
                 ),
-                borderRadius: BorderRadius.circular(24),
+                borderRadius: BorderRadius.circular(32),
+              ),
+              child: Stack(
+                children: [
+                   // Можно добавить анимацию линии сканирования позже
+                ],
               ),
             ),
           ),
@@ -75,19 +70,22 @@ class ScanScreen extends StatelessWidget {
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFB95C1D),
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 18),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(15),
                 ),
               ),
               onPressed: () {
-                // Переходим на экран приветствия
-                Navigator.push(context, MaterialPageRoute(builder: (context) => WelcomeScreen()));
+                // После "сканирования" переходим к выбору ресторана
+                Navigator.push(
+                  context, 
+                  MaterialPageRoute(builder: (context) => const RestaurantSelectionScreen())
+                );
               },
               child: const Text(
-                'Открыть меню',
+                'Начать выбор',
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: 18,
                   color: Colors.white,
                   fontWeight: FontWeight.bold,
                 ),

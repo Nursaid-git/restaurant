@@ -18,6 +18,15 @@ class CartItem {
 
   double get totalPrice => unitPrice * quantity;
 
+  /// Примерное время приготовления этой позиции с учётом количества:
+  /// каждая дополнительная порция чуть увеличивает время (кухня всё ещё
+  /// готовит параллельно с другими блюдами, но несколько порций одного
+  /// блюда занимают больше места на плите/в духовке).
+  static const int extraMinutesPerExtraPortion = 3;
+
+  int get estimatedPreparationMinutes =>
+      dish.preparationMinutes + (quantity - 1) * extraMinutesPerExtraPortion;
+
   String get optionsSummary {
     if (selectedOptions.isEmpty) return '';
     return selectedOptions.map((o) => o.title).join(', ');

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant/screens/cart_screen.dart';
-import '../data/mock_data.dart';
-import '../models/dish.dart';
-import '../providers/cart_provider.dart';
-import '../theme/app_theme.dart';
-import 'dish_detail_screen.dart';
+import 'package:restaurant/models/dish.dart';
+import 'package:restaurant/providers/cart_provider.dart';
+import 'package:restaurant/providers/restaurant_provider.dart';
+import 'package:restaurant/theme/app_theme.dart';
+import 'package:restaurant/screens/dish_detail_screen.dart';
 
 class MenuScreen extends StatefulWidget {
   const MenuScreen({super.key});
@@ -16,7 +16,6 @@ class MenuScreen extends StatefulWidget {
 
 class _MenuScreenState extends State<MenuScreen> {
   String _selectedCategory = 'Все';
-
   bool _isSearching = false;
   String _searchQuery = '';
   final _searchController = TextEditingController();
@@ -27,23 +26,18 @@ class _MenuScreenState extends State<MenuScreen> {
     super.dispose();
   }
 
-  List<Dish> get _filteredDishes {
+  List<Dish> _getFilteredDishes(List<Dish> allDishes) {
+    List<Dish> filtered = allDishes;
+    
     if (_isSearching && _searchQuery.trim().isNotEmpty) {
       final query = _searchQuery.trim().toLowerCase();
-      return kDishes.where((d) => d.name.toLowerCase().contains(query)).toList();
+      filtered = filtered.where((d) => d.name.toLowerCase().contains(query)).toList();
+    } else if (_selectedCategory != 'Все') {
+      filtered = filtered.where((d) => d.category == _selectedCategory).toList();
     }
-
-    if (_selectedCategory == 'Все') return kDishes;
-
-    final matching = kDishes.where((d) => d.category == _selectedCategory).toList();
-    final others = kDishes.where((d) => d.category != _selectedCategory).toList();
-
-    return [...matching, ...others];
+    
+    return filtered;
   }
-
-  int _currentIndex = 0;
-
-  void _goToTab(int index) => setState(() => _currentIndex = index);
 
   void _toggleSearch() {
     setState(() {
@@ -57,20 +51,59 @@ class _MenuScreenState extends State<MenuScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final cartCount = context.watch<CartProvider>().totalCount;
+    final resProvider = context.watch<RestaurantProvider>();
+    final restaurantName = resProvider.selectedRestaurant?.name ?? "Меню";
+    final allDishes = resProvider.dishes;
+    final filteredDishes = _getFilteredDishes(allDishes);
+
+    // Получаем уникальные категории из загруженных блюд
+    final categories = ['Все', ...allDishes.map((d) => d.category).toSet().toList()];
+
     return Scaffold(
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           Navigator.push(context,
-              MaterialPageRoute(builder: (context) => CartScreen(onAddDish: () => _goToTab(0))));
+              MaterialPageRoute(builder: (context) => CartScreen(onAddDish: () {})));
         },
         backgroundColor: AppColors.accent,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
+        child: Stack(
+          clipBehavior: Clip.none,
           children: [
-            Icon(Icons.shopping_bag_outlined, color: Colors.white),
-            Text('Корзина',
-                style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600))
+            const Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.shopping_bag_outlined, color: Colors.white),
+                Text('Корзина',
+                    style: TextStyle(fontSize: 10, color: Colors.white, fontWeight: FontWeight.w600))
+              ],
+            ),
+            if (cartCount > 0)
+              Positioned(
+                top: -8,
+                right: -8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(color: Colors.black26, blurRadius: 3, offset: Offset(0, 1)),
+                    ],
+                  ),
+                  constraints: const BoxConstraints(minWidth: 22, minHeight: 22),
+                  child: Text(
+                    '$cartCount',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      color: AppColors.accent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -89,7 +122,7 @@ class _MenuScreenState extends State<MenuScreen> {
         )
             : Align(
             alignment: Alignment.topLeft,
-            child: const Text("L'Art Culinaire", style: TextStyle(color: AppColors.accent))),
+            child: Text(restaurantName, style: const TextStyle(color: AppColors.accent))),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -100,28 +133,30 @@ class _MenuScreenState extends State<MenuScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: resProvider.isLoading 
+        ? const Center(child: CircularProgressIndicator(color: AppColors.accent))
+        : Column(
         children: [
-          if (!_isSearching) _buildCategoryChips(),
+          if (!_isSearching) _buildCategoryChips(categories),
           Expanded(
-            child: _filteredDishes.isEmpty
+            child: filteredDishes.isEmpty
                 ? const Center(
               child: Text(
-                'Ничего не найдено',
+                'Блюда не найдены',
                 style: TextStyle(color: AppColors.textSecondary),
               ),
             )
                 : GridView.builder(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-              itemCount: _filteredDishes.length,
+              itemCount: filteredDishes.length,
               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                 crossAxisCount: 2,
                 mainAxisSpacing: 14,
                 crossAxisSpacing: 14,
-                childAspectRatio: 0.72,
+                childAspectRatio: 0.69,
               ),
               itemBuilder: (context, index) {
-                final dish = _filteredDishes[index];
+                final dish = filteredDishes[index];
                 return _DishCard(dish: dish);
               },
             ),
@@ -131,16 +166,16 @@ class _MenuScreenState extends State<MenuScreen> {
     );
   }
 
-  Widget _buildCategoryChips() {
+  Widget _buildCategoryChips(List<String> categories) {
     return SizedBox(
       height: 44,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: kCategories.length,
+        itemCount: categories.length,
         separatorBuilder: (_, __) => const SizedBox(width: 8),
         itemBuilder: (context, index) {
-          final category = kCategories[index];
+          final category = categories[index];
           final selected = category == _selectedCategory;
           return ChoiceChip(
             label: Text(category),
@@ -272,8 +307,6 @@ class _DishCard extends StatelessWidget {
   }
 }
 
-/// Показывает круглую кнопку "+", а после первого нажатия — степпер (- кол-во +),
-/// синхронизированный с корзиной через CartProvider.
 class _QuantityControl extends StatelessWidget {
   final Dish dish;
   const _QuantityControl({required this.dish});

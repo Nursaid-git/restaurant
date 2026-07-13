@@ -7,8 +7,26 @@ class CartProvider extends ChangeNotifier {
   String orderComment = '';
 
   static const double serviceFeeRate = 0.10;
+  static const int tableNumber = 7;
 
   List<CartItem> get items => List.unmodifiable(_items);
+
+  /// Максимальное время приготовления среди позиций (кухня готовит параллельно).
+  /// Учитывает количество каждой позиции — чем больше порций одного блюда,
+  /// тем больше времени может понадобиться на его приготовление.
+  int get maxPreparationMinutes {
+    if (_items.isEmpty) return 0;
+    return _items
+        .map((i) => i.estimatedPreparationMinutes)
+        .reduce((a, b) => a > b ? a : b);
+  }
+
+  /// Примерное время ожидания: max + буфер на подачу.
+  String get estimatedWaitTime {
+    final max = maxPreparationMinutes;
+    if (max == 0) return '—';
+    return '${max + 10}–${max + 15} мин';
+  }
 
   int get totalCount =>
       _items.fold(0, (sum, item) => sum + item.quantity);

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant/models/cart_item.dart';
 import 'package:restaurant/providers/cart_provider.dart';
+import 'package:restaurant/providers/restaurant_provider.dart';
 import 'package:restaurant/screens/menu_screen.dart';
 import 'package:restaurant/theme/app_theme.dart';
 
@@ -52,18 +53,76 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
+    final tableName = context.watch<RestaurantProvider>().selectedTable ?? '—';
 
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
       ),
       child: Scaffold(
-      appBar: AppBar(
-        leading: IconButton(onPressed: (){
-          Navigator.pop(context);
-        }, icon: Icon(CupertinoIcons.back)),
-      ),
+        appBar: AppBar(
+          leading: IconButton(
+            onPressed: () => Navigator.pop(context),
+            icon: const Icon(CupertinoIcons.back),
+          ),
+          title: cart.isEmpty ? null : _buildOrderHeader(cart, tableName),
+          centerTitle: true,
+          titleSpacing: 0,
+        ),
         body: cart.isEmpty ? _buildEmptyState() : _buildCartContent(context, cart),
+      ),
+    );
+  }
+
+  Widget _buildOrderHeader(CartProvider cart, String tableName) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.divider),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.table_restaurant_outlined, size: 18, color: AppColors.accent),
+          const SizedBox(width: 6),
+          Text(
+            tableName,
+            style: const TextStyle(
+              fontSize: 13.5,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          Container(
+            width: 1,
+            height: 28,
+            margin: const EdgeInsets.symmetric(horizontal: 12),
+            color: AppColors.divider,
+          ),
+          const Icon(Icons.schedule_outlined, size: 18, color: AppColors.accent),
+          const SizedBox(width: 6),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Примерное время',
+                style: TextStyle(fontSize: 10, color: AppColors.textSecondary),
+              ),
+              Text(
+                cart.estimatedWaitTime,
+                style: const TextStyle(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -86,10 +145,10 @@ class _CartScreenState extends State<CartScreen> {
           ),
           const SizedBox(height: 20),
           ElevatedButton(
-            onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context) => MenuScreen()));},
-            child: Padding(
-              padding: const EdgeInsets.all(3),
-              child: const Text('Перейти в меню',style: TextStyle(fontSize: 14),),
+            onPressed: (){Navigator.push(context, MaterialPageRoute(builder: (context) => const MenuScreen()));},
+            child: const Padding(
+              padding: EdgeInsets.all(3),
+              child: Text('Перейти в меню',style: TextStyle(fontSize: 14),),
             ),
           ),
         ],
@@ -108,7 +167,7 @@ class _CartScreenState extends State<CartScreen> {
               const SizedBox(height: 8),
               OutlinedButton.icon(
                 onPressed: (){
-                  Navigator.push(context, MaterialPageRoute(builder: (context) => MenuScreen()));
+                  Navigator.push(context, MaterialPageRoute(builder: (context) => const MenuScreen()));
                 },
                 icon: const Icon(Icons.add, color: AppColors.accent),
                 label: const Text('Добавить блюдо', style: TextStyle(color: AppColors.accent)),
@@ -228,20 +287,46 @@ class _CartItemTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: Image.network(
-              item.dish.imageUrl,
-              width: 56,
-              height: 56,
-              fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => Container(
-                width: 56,
-                height: 56,
-                color: AppColors.chipBg,
-                child: const Icon(Icons.restaurant, color: AppColors.textSecondary, size: 20),
+          Stack(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.network(
+                  item.dish.imageUrl,
+                  width: 72,
+                  height: 72,
+                  fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => Container(
+                    width: 72,
+                    height: 72,
+                    color: AppColors.chipBg,
+                    child: const Icon(Icons.restaurant, color: AppColors.textSecondary, size: 20),
+                  ),
+                ),
               ),
-            ),
+              Positioned(
+                left: 4,
+                bottom: 4,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withOpacity(0.55),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.schedule, color: Colors.white, size: 10),
+                      const SizedBox(width: 3),
+                      Text(
+                        '${item.dish.preparationMinutes} мин',
+                        style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(width: 12),
           Expanded(

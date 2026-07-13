@@ -15,6 +15,7 @@ final List<Dish> kDishes = [
     weight: '180г',
     calories: 320,
     rating: 4.8,
+    preparationMinutes: 15,
     imageUrl:
         'https://images.unsplash.com/photo-1625944230945-1b7dd3b949ab?w=800&q=80',
     customizations: const [
@@ -39,6 +40,7 @@ final List<Dish> kDishes = [
     weight: '260г',
     calories: 410,
     rating: 4.7,
+    preparationMinutes: 20,
     imageUrl:
         'https://images.unsplash.com/photo-1633964913295-ceb43956c33b?w=800&q=80',
     customizations: const [
@@ -63,6 +65,7 @@ final List<Dish> kDishes = [
     weight: '300г',
     calories: 560,
     rating: 4.9,
+    preparationMinutes: 25,
     imageUrl:
         'https://images.unsplash.com/photo-1600891964599-f61ba0e24092?w=800&q=80',
     customizations: const [
@@ -86,6 +89,7 @@ final List<Dish> kDishes = [
     weight: '140г',
     calories: 310,
     rating: 4.6,
+    preparationMinutes: 10,
     imageUrl:
         'https://images.unsplash.com/photo-1519340333755-56e9c1d04579?w=800&q=80',
     customizations: const [
@@ -109,6 +113,7 @@ final List<Dish> kDishes = [
     weight: '160г',
     calories: 280,
     rating: 4.7,
+    preparationMinutes: 12,
     imageUrl:
     'https://images.unsplash.com/photo-1553621042-f6e147245754?w=800&q=80',
     customizations: const [
@@ -132,6 +137,7 @@ final List<Dish> kDishes = [
     weight: '280г',
     calories: 470,
     rating: 4.8,
+    preparationMinutes: 22,
     imageUrl:
     'https://images.unsplash.com/photo-1544025162-d76694265947?w=800&q=80',
     customizations: const [
@@ -155,6 +161,7 @@ final List<Dish> kDishes = [
     weight: '130г',
     calories: 290,
     rating: 4.9,
+    preparationMinutes: 10,
     imageUrl:
     'https://images.unsplash.com/photo-1470124182917-cc6e71b22ecc?w=800&q=80',
     customizations: const [
@@ -177,6 +184,7 @@ final List<Dish> kDishes = [
     weight: '150г',
     calories: 240,
     rating: 4.6,
+    preparationMinutes: 10,
     imageUrl:
     'https://images.unsplash.com/photo-1626200419199-391ae4be7a41?w=800&q=80',
     customizations: const [
