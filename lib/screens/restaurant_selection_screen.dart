@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant/theme/app_theme.dart';
-import 'package:restaurant/screens/welcome_screen.dart';
+import 'package:restaurant/screens/menu_screen.dart';
 import 'package:restaurant/providers/restaurant_provider.dart';
 
 class RestaurantSelectionScreen extends StatefulWidget {
@@ -14,11 +14,9 @@ class RestaurantSelectionScreen extends StatefulWidget {
 
 class _RestaurantSelectionScreenState extends State<RestaurantSelectionScreen> {
   RestaurantInfo? selectedRes;
-  String? selectedTable;
+  TableInfo? selectedTable;
   List<RestaurantInfo> restaurants = [];
   bool isLoadingRestaurants = true;
-
-  final List<String> tables = List.generate(20, (index) => 'Стол ${index + 1}');
 
   @override
   void initState() {
@@ -48,8 +46,8 @@ class _RestaurantSelectionScreenState extends State<RestaurantSelectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final resProvider = context.watch<RestaurantProvider>();
     final screenWidth = MediaQuery.of(context).size.width;
-    // На маленьких экранах делаем 4 колонки, на больших - 5 или 6
     int tableColumns = screenWidth < 360 ? 4 : 5;
 
     return Scaffold(
@@ -75,59 +73,97 @@ class _RestaurantSelectionScreenState extends State<RestaurantSelectionScreen> {
             ...restaurants.map((res) => _buildSelectionCard(
                   res: res,
                   isSelected: selectedRes?.id == res.id,
-                  onTap: () => setState(() => selectedRes = res),
+                  onTap: () {
+                    setState(() {
+                      selectedRes = res;
+                      selectedTable = null;
+                    });
+                    context.read<RestaurantProvider>().setRestaurant(res);
+                  },
                 )),
-            const SizedBox(height: 32),
-            const Text(
-              'Выберите номер стола',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            GridView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: tableColumns,
-                crossAxisSpacing: 8,
-                mainAxisSpacing: 8,
-                childAspectRatio: 1,
+            
+            if (selectedRes != null) ...[
+              const SizedBox(height: 32),
+              const Text(
+                'Выберите номер стола',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              itemCount: tables.length,
-              itemBuilder: (context, index) {
-                final table = tables[index];
-                final isSelected = selectedTable == table;
-                return InkWell(
-                  onTap: () => setState(() => selectedTable = table),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: isSelected ? AppColors.accent : AppColors.card,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: isSelected ? AppColors.accent : AppColors.divider,
-                      ),
-                    ),
-                    alignment: Alignment.center,
-                    child: Text(
-                      '${index + 1}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: isSelected ? Colors.white : AppColors.textPrimary,
-                      ),
-                    ),
+              const SizedBox(height: 12),
+              if (resProvider.isLoadingTables)
+                const Center(child: CircularProgressIndicator(color: AppColors.accent))
+              else if (resProvider.tables.isEmpty)
+                const Text('В этом заведении нет доступных столов.', style: TextStyle(color: AppColors.textSecondary))
+              else
+                GridView.builder(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: tableColumns,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                    childAspectRatio: 0.9,
                   ),
-                );
-              },
-            ),
-            const SizedBox(height: 40),
+                  itemCount: resProvider.tables.length,
+                  itemBuilder: (context, index) {
+                    final table = resProvider.tables[index];
+                    final isSelected = selectedTable?.id == table.id;
+                    return InkWell(
+                      onTap: () => setState(() => selectedTable = table),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isSelected ? AppColors.accent : AppColors.card,
+                          borderRadius: BorderRadius.circular(10),
+                          border: Border.all(
+                            color: isSelected ? AppColors.accent : AppColors.divider,
+                          ),
+                        ),
+                        alignment: Alignment.center,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              table.number,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: isSelected ? Colors.white : AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.person, 
+                                  size: 10, 
+                                  color: isSelected ? Colors.white70 : AppColors.textSecondary
+                                ),
+                                Text(
+                                  '${table.capacity}',
+                                  style: TextStyle(
+                                    fontSize: 10, 
+                                    color: isSelected ? Colors.white70 : AppColors.textSecondary
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+            ],
+            
+            const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: (selectedRes != null && selectedTable != null)
                     ? () {
-                        context.read<RestaurantProvider>().setRestaurant(selectedRes!, selectedTable!);
+                        context.read<RestaurantProvider>().setTable(selectedTable!);
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+                          MaterialPageRoute(builder: (context) => const MenuScreen()),
                         );
                       }
                     : null,

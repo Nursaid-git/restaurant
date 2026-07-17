@@ -54,6 +54,7 @@ class _MenuScreenState extends State<MenuScreen> {
     final cartCount = context.watch<CartProvider>().totalCount;
     final resProvider = context.watch<RestaurantProvider>();
     final restaurantName = resProvider.selectedRestaurant?.name ?? "Меню";
+    final tableName = resProvider.selectedTable?.number ?? "";
     final allDishes = resProvider.dishes;
     final filteredDishes = _getFilteredDishes(allDishes);
 
@@ -70,7 +71,6 @@ class _MenuScreenState extends State<MenuScreen> {
       crossAxisCount = 3;
       childAspectRatio = 0.70;
     } else if (screenWidth < 380) {
-      // Еще выше для самых узких экранов
       childAspectRatio = 0.54; 
     }
 
@@ -136,7 +136,10 @@ class _MenuScreenState extends State<MenuScreen> {
         )
             : Align(
             alignment: Alignment.topLeft,
-            child: Text(restaurantName, style: const TextStyle(color: AppColors.accent))),
+            child: Text(
+              tableName.isNotEmpty ? "$restaurantName • Стол $tableName" : restaurantName, 
+              style: const TextStyle(color: AppColors.accent, fontSize: 16, fontWeight: FontWeight.bold)
+            )),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -265,7 +268,7 @@ class _DishCard extends StatelessWidget {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.55),
+                      color: Colors.black.withValues(alpha: 0.55),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Row(

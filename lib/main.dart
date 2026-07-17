@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:device_preview/device_preview.dart';
+import 'package:restaurant/screens/qr_generator_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:restaurant/providers/cart_provider.dart';

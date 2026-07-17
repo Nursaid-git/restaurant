@@ -57,7 +57,8 @@ class _CartScreenState extends State<CartScreen> {
   @override
   Widget build(BuildContext context) {
     final cart = context.watch<CartProvider>();
-    final tableName = context.watch<RestaurantProvider>().selectedTable ?? '—';
+    final selectedTable = context.watch<RestaurantProvider>().selectedTable;
+    final tableName = selectedTable?.number ?? '—';
 
     return Container(
       decoration: BoxDecoration(
@@ -93,7 +94,7 @@ class _CartScreenState extends State<CartScreen> {
           const Icon(Icons.table_restaurant_outlined, size: 18, color: AppColors.accent),
           const SizedBox(width: 6),
           Text(
-            tableName,
+            'Стол $tableName',
             style: const TextStyle(
               fontSize: 13.5,
               fontWeight: FontWeight.w600,
@@ -237,19 +238,27 @@ class _CartScreenState extends State<CartScreen> {
                   ? null
                   : () async {
                       final restaurantId = resProvider.selectedRestaurant?.id;
-                      final tableName = resProvider.selectedTable;
+                      final table = resProvider.selectedTable;
 
-                      if (restaurantId != null && tableName != null) {
-                        final success = await cart.sendOrderToSupabase(restaurantId, tableName);
+                      if (restaurantId != null && table != null) {
+                        final success = await cart.sendOrderToSupabase(
+                          restaurantId: restaurantId,
+                          tableId: table.id,
+                          tableName: table.number,
+                        );
                         if (success) {
-                          _showOrderPlacedDialog(context);
+                          if (mounted) {
+                            _showOrderPlacedDialog(context);
+                          }
                         } else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('Ошибка при оформлении заказа. Попробуйте снова.'),
-                              backgroundColor: Colors.redAccent,
-                            ),
-                          );
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Ошибка при оформлении заказа. Попробуйте снова.'),
+                                backgroundColor: Colors.redAccent,
+                              ),
+                            );
+                          }
                         }
                       }
                     },

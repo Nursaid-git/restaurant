@@ -81,8 +81,12 @@ class CartProvider extends ChangeNotifier {
     orderComment = value;
   }
 
-  // Метод отправки заказа в Supabase
-  Future<bool> sendOrderToSupabase(String restaurantId, String tableName) async {
+  // Обновленный метод отправки заказа в Supabase с поддержкой tableId
+  Future<bool> sendOrderToSupabase({
+    required String restaurantId,
+    required String tableId,
+    required String tableName,
+  }) async {
     if (_items.isEmpty) return false;
 
     _isSending = true;
@@ -91,10 +95,11 @@ class CartProvider extends ChangeNotifier {
     try {
       final supabase = Supabase.instance.client;
 
-      // 1. Создаем основной заказ
+      // 1. Создаем основной заказ, сохраняя и ID стола, и его номер (для удобства)
       final orderResponse = await supabase.from('orders').insert({
         'restaurant_id': restaurantId,
-        'table_name': tableName,
+        'table_id': tableId, // UUID стола
+        'table_name': tableName, // Текстовый номер
         'total_price': total,
         'comment': orderComment,
       }).select().single();

@@ -1,85 +1,151 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:provider/provider.dart';
+import 'package:restaurant/providers/restaurant_provider.dart';
+import 'package:restaurant/screens/menu_screen.dart';
 import 'package:restaurant/screens/restaurant_selection_screen.dart';
+import 'package:restaurant/theme/app_theme.dart';
 
-class ScanScreen extends StatelessWidget {
+class ScanScreen extends StatefulWidget {
   const ScanScreen({super.key});
+
+  @override
+  State<ScanScreen> createState() => _ScanScreenState();
+}
+
+class _ScanScreenState extends State<ScanScreen> {
+  bool isScanning = true;
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    // Рамка сканера будет занимать 70% ширины экрана, но не более 300px
-    final scannerSize = (screenWidth * 0.7).clamp(200.0, 300.0);
+    final scannerSize = (screenWidth * 0.7).clamp(200.0, 280.0);
 
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Stack(
-        fit: StackFit.expand,
         children: [
-          Image.network(
-            'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4',
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey.shade900),
+          // Сканер камеры
+          MobileScanner(
+            onDetect: (capture) async {
+              if (!isScanning) return;
+              
+              final List<Barcode> barcodes = capture.barcodes;
+              for (final barcode in barcodes) {
+                final String? code = barcode.rawValue;
+                if (code != null) {
+                  setState(() => isScanning = false);
+                  
+                  // Пытаемся найти стол по ID из QR
+                  final success = await context.read<RestaurantProvider>().setByTableId(code);
+                  
+                  if (success) {
+                    if (mounted) {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(builder: (context) => const MenuScreen()),
+                      );
+                    }
+                  } else {
+                    setState(() => isScanning = true);
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Неверный QR-код столика'),
+                          backgroundColor: Colors.redAccent,
+                        ),
+                      );
+                    }
+                  }
+                }
+              }
+            },
           ),
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
-            child: Container(
-              color: Colors.black.withOpacity(0.6),
+
+          // Затемнение вокруг области сканирования
+          ColorFiltered(
+            colorFilter: ColorFilter.mode(
+              Colors.black.withOpacity(0.5),
+              BlendMode.srcOut,
             ),
-          ),
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 20,
-            left: 20,
-            right: 20,
-            child: const Center(
-              child: Text(
-                'Сканировать QR-код',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 22,
-                  fontWeight: FontWeight.w600,
+            child: Stack(
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    color: Colors.transparent,
+                  ),
                 ),
-              ),
+                Center(
+                  child: Container(
+                    width: scannerSize,
+                    height: scannerSize,
+                    decoration: BoxDecoration(
+                      color: Colors.black,
+                      borderRadius: BorderRadius.circular(32),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
+
+          // Рамка сканера
           Center(
             child: Container(
               width: scannerSize,
               height: scannerSize,
               decoration: BoxDecoration(
-                border: Border.all(
-                  color: const Color(0xFFB95C1D),
-                  width: 3,
-                ),
+                border: Border.all(color: AppColors.accent, width: 4),
                 borderRadius: BorderRadius.circular(32),
               ),
             ),
           ),
+
+          // Текст сверху
           Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 40,
+            top: MediaQuery.of(context).padding.top + 40,
             left: 20,
             right: 20,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFB95C1D),
-                padding: const EdgeInsets.symmetric(vertical: 18),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
+            child: const Column(
+              children: [
+                Text(
+                  'Наведите камеру',
+                  style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
                 ),
-              ),
-              onPressed: () {
-                Navigator.push(
-                  context, 
-                  MaterialPageRoute(builder: (context) => const RestaurantSelectionScreen())
-                );
-              },
-              child: const Text(
-                'Начать выбор',
-                style: TextStyle(
-                  fontSize: 18,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                SizedBox(height: 8),
+                Text(
+                  'Отсканируйте QR-код на вашем столике',
+                  style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
-              ),
+              ],
+            ),
+          ),
+
+          // Кнопка ручного выбора снизу
+          Positioned(
+            bottom: MediaQuery.of(context).padding.bottom + 40,
+            left: 40,
+            right: 40,
+            child: Column(
+              children: [
+                if (!isScanning)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 20),
+                    child: CircularProgressIndicator(color: AppColors.accent),
+                  ),
+                TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const RestaurantSelectionScreen()),
+                    );
+                  },
+                  child: const Text(
+                    'Выбрать вручную',
+                    style: TextStyle(color: Colors.white, decoration: TextDecoration.underline),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
