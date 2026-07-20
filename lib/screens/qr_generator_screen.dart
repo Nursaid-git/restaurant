@@ -18,7 +18,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
   bool isLoading = true;
 
   // ВСТАВЬТЕ СЮДА ВАШУ ССЫЛКУ ПОСЛЕ ДЕПЛОЯ (GitHub Pages)
-  final String baseUrl = "https://nurik949.github.io/Restaurant/"; 
+  final String baseUrl = "https://nursaid-git.github.io/Restaurant/";
 
   @override
   void initState() {
