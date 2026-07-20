@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:device_preview/device_preview.dart';
+import 'package:restaurant/screens/qr_generator_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:restaurant/providers/cart_provider.dart';
@@ -50,17 +51,20 @@ class _LartCulinaireAppState extends State<LartCulinaireApp> {
   }
 
   Future<void> _handleIncomingLink() async {
+    // Получаем параметры из URL. 
+    // Пример: https://nursaid-git.github.io/restaurant/?tableId=UUID
     final params = Uri.base.queryParameters;
     final tableId = params['tableId'];
 
     if (tableId != null && tableId.isNotEmpty) {
-      _hasTableId = true;
-      // Теперь провайдер доступен сразу, так как он выше в дереве
       final provider = context.read<RestaurantProvider>();
       final success = await provider.setByTableId(tableId);
       
       if (mounted) {
-        setState(() => _isInitializing = false);
+        setState(() {
+          _hasTableId = success;
+          _isInitializing = false;
+        });
       }
     } else {
       if (mounted) {
@@ -71,15 +75,11 @@ class _LartCulinaireAppState extends State<LartCulinaireApp> {
 
   @override
   Widget build(BuildContext context) {
-    // Пока загружаем данные из QR-ссылки, показываем заставку
     if (_isInitializing && _hasTableId) {
-      return MaterialApp(
+      return const MaterialApp(
         debugShowCheckedModeBanner: false,
         home: Scaffold(
-          backgroundColor: AppColors.background,
-          body: const Center(
-            child: CircularProgressIndicator(color: AppColors.accent),
-          ),
+          body: Center(child: CircularProgressIndicator(color: Color(0xFFB95C1D))),
         ),
       );
     }
@@ -90,8 +90,8 @@ class _LartCulinaireAppState extends State<LartCulinaireApp> {
       title: "L'Art Culinaire",
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      // Если стол распознан из ссылки — идем в меню, если нет — открываем сканер
-      home: _hasTableId ? const MenuScreen() : const ScanScreen(),
+      // Если по ссылке зашли — в меню, если просто так — на экран сканера
+      home: _hasTableId ? const MenuScreen() : const QrGeneratorScreen(),
     );
   }
 }
