@@ -17,7 +17,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
   Map<String, dynamic>? selectedTable;
   bool isLoading = true;
 
-  // ВСТАВЬТЕ СЮДА ВАШУ ССЫЛКУ ПОСЛЕ ДЕПЛОЯ (GitHub Pages)
+  // ВАЖНО: Используем маленькие буквы, как в адресе GitHub
   final String baseUrl = "https://nursaid-git.github.io/restaurant/";
 
   @override
@@ -28,43 +28,50 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
 
   Future<void> _loadData() async {
     try {
+      // Имя таблицы в Supabase должно быть 'restaurants'
       final res = await Supabase.instance.client.from('restaurants').select();
-      setState(() {
-        restaurants = List<Map<String, dynamic>>.from(res);
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          restaurants = List<Map<String, dynamic>>.from(res);
+          isLoading = false;
+        });
+      }
     } catch (e) {
       debugPrint('Error loading restaurants: $e');
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
   Future<void> _loadTables(String restaurantId) async {
-    setState(() {
-      tables = [];
-      selectedTable = null;
-      isLoading = true;
-    });
+    if (mounted) {
+      setState(() {
+        tables = [];
+        selectedTable = null;
+        isLoading = true;
+      });
+    }
     try {
       final res = await Supabase.instance.client
           .from('tables')
           .select()
           .eq('restaurant_id', restaurantId);
-      setState(() {
-        tables = List<Map<String, dynamic>>.from(res);
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          tables = List<Map<String, dynamic>>.from(res);
+          isLoading = false;
+        });
+      }
     } catch (e) {
       debugPrint('Error loading tables: $e');
-      setState(() => isLoading = false);
+      if (mounted) setState(() => isLoading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    // Формируем финальную ссылку для QR-кода
     String qrData = "";
     if (selectedTable != null) {
+      // Формируем прямую ссылку для сканирования камерой
       qrData = "$baseUrl?tableId=${selectedTable!['id']}";
     }
 
@@ -124,7 +131,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                     const SizedBox(height: 20),
                     SelectableText(
                       qrData,
-                      style: const TextStyle(fontSize: 12, color: Colors.blue),
+                      style: const TextStyle(fontSize: 11, color: Colors.blue),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 20),
