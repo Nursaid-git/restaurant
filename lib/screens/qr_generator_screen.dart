@@ -17,6 +17,9 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
   Map<String, dynamic>? selectedTable;
   bool isLoading = true;
 
+  // ВСТАВЬТЕ СЮДА ВАШУ ССЫЛКУ ПОСЛЕ ДЕПЛОЯ (GitHub Pages)
+  final String baseUrl = "https://nurik949.github.io/Restaurant/"; 
+
   @override
   void initState() {
     super.initState();
@@ -59,9 +62,15 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Формируем финальную ссылку для QR-кода
+    String qrData = "";
+    if (selectedTable != null) {
+      qrData = "$baseUrl?tableId=${selectedTable!['id']}";
+    }
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Генератор QR-кодов', style: TextStyle(color: AppColors.accent)),
+        title: const Text('Генератор QR-ссылок', style: TextStyle(color: AppColors.accent)),
         centerTitle: true,
       ),
       body: isLoading && restaurants.isEmpty
@@ -104,7 +113,7 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                   const Spacer(),
                   if (selectedTable != null) ...[
                     const Text(
-                      'QR-код для стола:',
+                      'QR-ссылка для стола:',
                       style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 10),
@@ -112,7 +121,13 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                       '${selectedTable!['table_number']} (${restaurants.firstWhere((r) => r['id'] == selectedRestaurantId)['name']})',
                       style: const TextStyle(color: AppColors.textSecondary),
                     ),
-                    const SizedBox(height: 30),
+                    const SizedBox(height: 20),
+                    SelectableText(
+                      qrData,
+                      style: const TextStyle(fontSize: 12, color: Colors.blue),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 20),
                     Center(
                       child: Container(
                         padding: const EdgeInsets.all(16),
@@ -128,17 +143,11 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                           ],
                         ),
                         child: QrImageView(
-                          data: selectedTable!['id'].toString(),
+                          data: qrData,
                           version: QrVersions.auto,
                           size: 220.0,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Отсканируйте этот код приложением клиента',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
                   const Spacer(),

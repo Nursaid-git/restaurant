@@ -21,7 +21,7 @@ android {
     defaultConfig {
         applicationId = "com.example.restaurant"
         // mobile_scanner requires minSdk 21
-        minSdk = 21
+        minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdk
         versionCode = flutter.versionCode
         versionName = flutter.versionName
