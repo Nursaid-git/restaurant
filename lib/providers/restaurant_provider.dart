@@ -3,9 +3,9 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/dish.dart';
 
 class RestaurantInfo {
-  final String id; // UUID из Supabase
+  final String id; 
   final String name;
-  final String type; // 'restaurant', 'cafe', 'fastfood'
+  final String type; 
 
   RestaurantInfo({required this.id, required this.name, required this.type});
 }
@@ -47,13 +47,25 @@ class RestaurantProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Новый метод для установки данных через скан QR-кода
-  Future<bool> setByTableId(String tableId) async {
+  // МЕТОД ИСПРАВЛЕН: теперь он корректно извлекает ID из любых ссылок
+  Future<bool> setByTableId(String input) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      // 1. Получаем данные стола и ресторана одним запросом
+      String tableId = input;
+      
+      // Если в метод попала полная ссылка (например, при сканировании внутри приложения)
+      if (input.contains('tableId=')) {
+        final regExp = RegExp(r'tableId=([^&/#?]+)');
+        final match = regExp.firstMatch(input);
+        if (match != null) {
+          tableId = match.group(1)!;
+        }
+      }
+
+      debugPrint('Attempting to fetch table with ID: $tableId');
+
       final response = await Supabase.instance.client
           .from('tables')
           .select('*, restaurants(*)')
@@ -74,7 +86,6 @@ class RestaurantProvider with ChangeNotifier {
         capacity: response['capacity'] ?? 2,
       );
 
-      // 2. Загружаем меню этого ресторана
       await fetchDishes();
       
       _isLoading = false;
@@ -90,7 +101,6 @@ class RestaurantProvider with ChangeNotifier {
 
   Future<void> fetchTables() async {
     if (_selectedRestaurant == null) return;
-
     _isLoadingTables = true;
     notifyListeners();
 
@@ -118,7 +128,6 @@ class RestaurantProvider with ChangeNotifier {
 
   Future<void> fetchDishes() async {
     if (_selectedRestaurant == null) return;
-
     _isLoading = true;
     notifyListeners();
 

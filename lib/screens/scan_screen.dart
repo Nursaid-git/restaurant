@@ -3,6 +3,7 @@ import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import 'package:restaurant/providers/restaurant_provider.dart';
 import 'package:restaurant/screens/menu_screen.dart';
+import 'package:restaurant/screens/qr_generator_screen.dart';
 import 'package:restaurant/screens/restaurant_selection_screen.dart';
 import 'package:restaurant/theme/app_theme.dart';
 
@@ -23,35 +24,52 @@ class _ScanScreenState extends State<ScanScreen> {
 
     return Scaffold(
       backgroundColor: Colors.black,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        actions: [
+          // КНОПКА ГЕНЕРАТОРА В УГЛУ
+          IconButton(
+            icon: const Icon(Icons.qr_code_2, color: Colors.white, size: 28),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const QrGeneratorScreen()),
+              );
+            },
+          ),
+          const SizedBox(width: 8),
+        ],
+      ),
+      extendBodyBehindAppBar: true,
       body: Stack(
         children: [
-          // Сканер камеры
           MobileScanner(
             onDetect: (capture) async {
               if (!isScanning) return;
-              
               final List<Barcode> barcodes = capture.barcodes;
               for (final barcode in barcodes) {
                 final String? code = barcode.rawValue;
                 if (code != null) {
                   setState(() => isScanning = false);
-                  
-                  // Пытаемся найти стол по ID из QR
-                  final success = await context.read<RestaurantProvider>().setByTableId(code);
+
+                  // Сохраняем ссылки на навигатор и провайдер до начала асинхронной операции
+                  final navigator = Navigator.of(context);
+                  final restaurantProvider = context.read<RestaurantProvider>();
+                  final scaffoldMessenger = ScaffoldMessenger.of(context);
+
+                  final success = await restaurantProvider.setByTableId(code);
                   
                   if (success) {
-                    if (mounted) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(builder: (context) => const MenuScreen()),
-                      );
-                    }
+                    navigator.pushReplacement(
+                      MaterialPageRoute(builder: (context) => const MenuScreen()),
+                    );
                   } else {
-                    setState(() => isScanning = true);
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      setState(() => isScanning = true);
+                      scaffoldMessenger.showSnackBar(
                         const SnackBar(
-                          content: Text('Неверный QR-код столика'),
+                          content: Text('Неверный QR-код'),
                           backgroundColor: Colors.redAccent,
                         ),
                       );
@@ -61,35 +79,6 @@ class _ScanScreenState extends State<ScanScreen> {
               }
             },
           ),
-
-          // Затемнение вокруг области сканирования
-          ColorFiltered(
-            colorFilter: ColorFilter.mode(
-              Colors.black.withOpacity(0.5),
-              BlendMode.srcOut,
-            ),
-            child: Stack(
-              children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Colors.transparent,
-                  ),
-                ),
-                Center(
-                  child: Container(
-                    width: scannerSize,
-                    height: scannerSize,
-                    decoration: BoxDecoration(
-                      color: Colors.black,
-                      borderRadius: BorderRadius.circular(32),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Рамка сканера
           Center(
             child: Container(
               width: scannerSize,
@@ -100,50 +89,20 @@ class _ScanScreenState extends State<ScanScreen> {
               ),
             ),
           ),
-
-          // Текст сверху
           Positioned(
-            top: MediaQuery.of(context).padding.top + 40,
+            bottom: 40,
             left: 20,
             right: 20,
-            child: const Column(
-              children: [
-                Text(
-                  'Наведите камеру',
-                  style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Отсканируйте QR-код на вашем столике',
-                  style: TextStyle(color: Colors.white70, fontSize: 14),
-                ),
-              ],
-            ),
-          ),
-
-          // Кнопка ручного выбора снизу
-          Positioned(
-            bottom: MediaQuery.of(context).padding.bottom + 40,
-            left: 40,
-            right: 40,
             child: Column(
               children: [
-                if (!isScanning)
-                  const Padding(
-                    padding: EdgeInsets.only(bottom: 20),
-                    child: CircularProgressIndicator(color: AppColors.accent),
-                  ),
-                TextButton(
+                ElevatedButton(
                   onPressed: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const RestaurantSelectionScreen()),
                     );
                   },
-                  child: const Text(
-                    'Выбрать вручную',
-                    style: TextStyle(color: Colors.white, decoration: TextDecoration.underline),
-                  ),
+                  child: const Text('Выбрать вручную', style: TextStyle(color: Colors.white)),
                 ),
               ],
             ),

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:restaurant/theme/app_theme.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:html' as html; // Используем для получения реального адреса сайта
 
 class QrGeneratorScreen extends StatefulWidget {
   const QrGeneratorScreen({super.key});
@@ -17,8 +19,13 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
   Map<String, dynamic>? selectedTable;
   bool isLoading = true;
 
-  // ВАЖНО: Используем маленькие буквы, как в адресе GitHub
-  final String baseUrl = "https://nursaid-git.github.io/restaurant/";
+  // АВТОМАТИЧЕСКИЙ baseUrl: берет адрес, на котором запущен сайт прямо сейчас
+  String get dynamicBaseUrl {
+    if (!kIsWeb) return "https://nursaid-git.github.io/restaurant/";
+    final String fullUrl = html.window.location.href;
+    // Отрезаем всё лишнее (параметры и хэши), чтобы получить чистый корень
+    return fullUrl.split('?')[0].split('#')[0];
+  }
 
   @override
   void initState() {
@@ -28,7 +35,6 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
 
   Future<void> _loadData() async {
     try {
-      // Имя таблицы в Supabase должно быть 'restaurants'
       final res = await Supabase.instance.client.from('restaurants').select();
       if (mounted) {
         setState(() {
@@ -71,13 +77,14 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
   Widget build(BuildContext context) {
     String qrData = "";
     if (selectedTable != null) {
-      // Формируем прямую ссылку для сканирования камерой
-      qrData = "$baseUrl?tableId=${selectedTable!['id']}";
+      // Формируем ссылку, которую поймет любая камера: адрес?tableId=UUID
+      final separator = dynamicBaseUrl.contains('?') ? '&' : '?';
+      qrData = "$dynamicBaseUrl${separator}tableId=${selectedTable!['id']}";
     }
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Генератор QR-ссылок', style: TextStyle(color: AppColors.accent)),
+        title: const Text('Генератор QR-кодов', style: TextStyle(color: AppColors.accent)),
         centerTitle: true,
       ),
       body: isLoading && restaurants.isEmpty
@@ -119,20 +126,11 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                     ),
                   const Spacer(),
                   if (selectedTable != null) ...[
-                    const Text(
-                      'QR-ссылка для стола:',
-                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 10),
+                    const Text('QR-код готов:', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 5),
                     Text(
-                      '${selectedTable!['table_number']} (${restaurants.firstWhere((r) => r['id'] == selectedRestaurantId)['name']})',
+                      'Стол ${selectedTable!['table_number']} в ${restaurants.firstWhere((r) => r['id'] == selectedRestaurantId)['name']}',
                       style: const TextStyle(color: AppColors.textSecondary),
-                    ),
-                    const SizedBox(height: 20),
-                    SelectableText(
-                      qrData,
-                      style: const TextStyle(fontSize: 11, color: Colors.blue),
-                      textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 20),
                     Center(
@@ -141,21 +139,17 @@ class _QrGeneratorScreenState extends State<QrGeneratorScreen> {
                         decoration: BoxDecoration(
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withValues(alpha: 0.1),
-                              blurRadius: 10,
-                              spreadRadius: 5,
-                            )
-                          ],
+                          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.1), blurRadius: 10)],
                         ),
                         child: QrImageView(
                           data: qrData,
                           version: QrVersions.auto,
-                          size: 220.0,
+                          size: 200.0,
                         ),
                       ),
                     ),
+                    const SizedBox(height: 10),
+                    SelectableText(qrData, style: const TextStyle(fontSize: 9, color: Colors.blue)),
                   ],
                   const Spacer(),
                 ],

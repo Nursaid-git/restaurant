@@ -2,7 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:device_preview/device_preview.dart';
-import 'package:restaurant/screens/qr_generator_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:restaurant/providers/cart_provider.dart';
@@ -47,16 +46,32 @@ class _LartCulinaireAppState extends State<LartCulinaireApp> {
   @override
   void initState() {
     super.initState();
-    _handleIncomingLink();
+    // Даем системе время обработать URL в браузере
+    Future.delayed(const Duration(milliseconds: 200), () {
+      _handleIncomingLink();
+    });
   }
 
   Future<void> _handleIncomingLink() async {
-    // Получаем параметры из URL. 
-    // Пример: https://nursaid-git.github.io/restaurant/?tableId=UUID
-    final params = Uri.base.queryParameters;
-    final tableId = params['tableId'];
+    String? tableId;
+
+    if (kIsWeb) {
+      final String fullUrl = Uri.base.toString();
+      debugPrint('Deep processing URL: $fullUrl');
+      
+      // 1. Пытаемся взять стандартным способом
+      tableId = Uri.base.queryParameters['tableId'];
+
+      // 2. Если не вышло, ищем tableId в любой части строки через регулярное выражение
+      if (tableId == null || tableId.isEmpty) {
+        final regExp = RegExp(r'tableId=([^&/#?]+)');
+        final match = regExp.firstMatch(fullUrl);
+        tableId = match?.group(1);
+      }
+    }
 
     if (tableId != null && tableId.isNotEmpty) {
+      debugPrint('Target table detected: $tableId. Loading data...');
       final provider = context.read<RestaurantProvider>();
       final success = await provider.setByTableId(tableId);
       
@@ -75,11 +90,15 @@ class _LartCulinaireAppState extends State<LartCulinaireApp> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isInitializing && _hasTableId) {
-      return const MaterialApp(
+    // Пока приложение проверяет ссылку, показываем стильный индикатор
+    if (_isInitializing) {
+      return MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: Scaffold(
-          body: Center(child: CircularProgressIndicator(color: Color(0xFFB95C1D))),
+        theme: AppTheme.theme,
+        home: const Scaffold(
+          body: Center(
+            child: CircularProgressIndicator(color: Color(0xFFB95C1D)),
+          ),
         ),
       );
     }
@@ -90,8 +109,8 @@ class _LartCulinaireAppState extends State<LartCulinaireApp> {
       title: "L'Art Culinaire",
       debugShowCheckedModeBanner: false,
       theme: AppTheme.theme,
-      // Если по ссылке зашли — в меню, если просто так — на экран сканера
-      home: _hasTableId ? const MenuScreen() : const QrGeneratorScreen(),
+      // Если стол распознан из ссылки — идем сразу в меню, иначе — на скан
+      home: _hasTableId ? const MenuScreen() : const ScanScreen(),
     );
   }
 }
